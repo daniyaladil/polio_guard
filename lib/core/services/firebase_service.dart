@@ -8,8 +8,9 @@ class FirebaseService extends GetxService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Hardcoded Admin Credentials
-  static const String adminEmail = 'admin@polioguard.com';
-  static const String adminPassword = 'Admin@123';
+  static const String adminEmail = 'admin@gmail.com';
+  // static const String adminEmail = 'admin@polioguard.com';
+  static const String adminPassword = 'admin123';
 
   Future<FirebaseService> init() async {
     // Create admin account if doesn't exist
