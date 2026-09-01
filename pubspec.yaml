@@ -1,0 +1,36 @@
+name: polio_guard
+description: Polio Guard app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_screenutil: ^5.9.3
+  get: ^4.7.3
+  google_fonts:
+  firebase_core: ^4.13.0
+  firebase_auth: ^6.5.7
+  cloud_firestore: ^6.8.0
+  firebase_storage: ^13.4.6
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+  geolocator: ^10.1.0
+  permission_handler: ^11.0.1
+
+    # Utilities
+  connectivity_plus: ^7.3.1
+  intl: ^0.20.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  # Uncomment once you add a real logo image:
+  assets:
+    - assets/

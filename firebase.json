@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"polio-guard","appId":"1:698750276497:android:cf77cb8efb4a91d0960030","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"polio-guard","configurations":{"android":"1:698750276497:android:cf77cb8efb4a91d0960030","ios":"1:698750276497:ios:9fecbe081c52f760960030"}}}}}}

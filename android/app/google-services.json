@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "698750276497",
+    "project_id": "polio-guard",
+    "storage_bucket": "polio-guard.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:698750276497:android:cf77cb8efb4a91d0960030",
+        "android_client_info": {
+          "package_name": "com.example.polio_guard"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAV1xPXRG_UwdFU3q6qAJnmRb317twtHps"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
