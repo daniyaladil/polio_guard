@@ -7,6 +7,7 @@ import '../controller/admin_controller.dart';
 import '../screens/add_worker_screen.dart';
 import '../screens/manage_workers_screen.dart';
 import '../screens/change_password_screen.dart';
+import 'analysis_screen.dart';
 
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
@@ -109,16 +110,18 @@ class AdminDashboard extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
 
-              // Stats Row
-              _buildStatsRow(controller),
-              SizedBox(height: 16.h),
-
               // Map with dynamic house markers
               _buildMapWithDynamicMarkers(controller),
               SizedBox(height: 16.h),
 
               // Legend
               _buildLegend(controller),
+              SizedBox(height: 16.h),
+
+              // Add this in the build method after the legend section
+              SizedBox(height: 16.h),
+
+              _buildFullAnalysisButton(),
               SizedBox(height: 16.h),
 
               // Action Buttons
@@ -130,38 +133,46 @@ class AdminDashboard extends StatelessWidget {
       }),
     );
   }
-
-  Widget _buildStatsRow(AdminController controller) {
-    return Obx(() => Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            title: 'Workers',
-            value: controller.totalWorkers.value.toString(),
-            icon: Icons.people,
-            color: const Color(0xFF1A5276),
+  Widget _buildFullAnalysisButton() {
+    return GestureDetector(
+      onTap: () => Get.to(() => const AdminAnalysisScreen()),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(vertical: 16.h),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1A5276), Color(0xFF2E86C1)],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
           ),
+          borderRadius: BorderRadius.circular(12.r),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF1A5276).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: _StatCard(
-            title: 'Sectors',
-            value: '5',
-            icon: Icons.location_city,
-            color: Colors.green.shade700,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.analytics, color: Colors.white, size: 22.sp),
+            SizedBox(width: 10.w),
+            Text(
+              'See Full Analysis',
+              style: TextStyle(
+                fontSize: 15.sp,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(width: 8.w),
+            Icon(Icons.arrow_forward, color: Colors.white, size: 18.sp),
+          ],
         ),
-        SizedBox(width: 12.w),
-        Expanded(
-          child: _StatCard(
-            title: 'Vaccinated',
-            value: controller.totalVaccinated.value.toString(),
-            icon: Icons.check_circle,
-            color: const Color(0xFF34A853),
-          ),
-        ),
-      ],
-    ));
+      ),
+    );
   }
 
   Widget _buildMapWithDynamicMarkers(AdminController controller) {
@@ -179,7 +190,7 @@ class AdminDashboard extends StatelessWidget {
             points: boundary,
             color: color.withOpacity(0.1),
             borderColor: color,
-            borderStrokeWidth: 1.5,
+            borderStrokeWidth: 5,
           ),
         );
       }
@@ -206,11 +217,7 @@ class AdminDashboard extends StatelessWidget {
               height: markerSize,
               decoration: BoxDecoration(
                 color: house.statusColor,
-                borderRadius: BorderRadius.circular(2.r),
-                border: Border.all(
-                  color: Colors.white,
-                  width: markerSize > 16 ? 2 : 1.5,
-                ),
+                borderRadius: BorderRadius.circular(200.r),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),
@@ -219,16 +226,7 @@ class AdminDashboard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Center(
-                child: Text(
-                  '•',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              child: Icon(Icons.location_on,size: 10,color: Colors.white,)
             ),
           ),
         ),

@@ -79,7 +79,7 @@ class _WorkerDashboardState extends State<WorkerDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Assigned Area',
+                        'Assigned Area,msa,md',
                         style: TextStyle(
                           fontSize: 12.sp,
                           color: Colors.grey.shade600,
