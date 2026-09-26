@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<key>NSCameraUsageDescription</key>
+<string>We need camera access to record vaccination, absence, and refusal proof.</string>
+
+<key>NSMicrophoneUsageDescription</key>
+<string>We need microphone access to record video with audio.</string>
+
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>Save recorded videos to your device gallery.</string>
+
+<key>NSLocationWhenInUseUsageDescription</key>
+<string>We attach your current location to each visit record.</string>
+
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>We attach your current location to each visit record.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

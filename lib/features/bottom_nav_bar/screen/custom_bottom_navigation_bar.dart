@@ -15,7 +15,6 @@ class CustomBottomNavigationBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = [
       _BottomItem(icon: Icons.home_filled, label: 'Home'),
-      _BottomItem(icon: Icons.vaccines, label: 'Injection'),
       _BottomItem(icon: Icons.settings, label: 'Settings'),
     ];
 

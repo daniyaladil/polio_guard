@@ -14,7 +14,6 @@ class AdminDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get the controller
     final AdminController controller = Get.put(AdminController());
 
     return Scaffold(
@@ -91,7 +90,6 @@ class AdminDashboard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Text
               Text(
                 'Welcome, Administrator',
                 style: TextStyle(
@@ -110,21 +108,12 @@ class AdminDashboard extends StatelessWidget {
               ),
               SizedBox(height: 16.h),
 
-              // Map with dynamic house markers
               _buildMapWithDynamicMarkers(controller),
               SizedBox(height: 16.h),
-
-              // Legend
               _buildLegend(controller),
               SizedBox(height: 16.h),
-
-              // Add this in the build method after the legend section
-              SizedBox(height: 16.h),
-
               _buildFullAnalysisButton(),
               SizedBox(height: 16.h),
-
-              // Action Buttons
               _buildActionButtons(),
               SizedBox(height: 12.h),
             ],
@@ -133,6 +122,7 @@ class AdminDashboard extends StatelessWidget {
       }),
     );
   }
+
   Widget _buildFullAnalysisButton() {
     return GestureDetector(
       onTap: () => Get.to(() => const AdminAnalysisScreen()),
@@ -176,105 +166,118 @@ class AdminDashboard extends StatelessWidget {
   }
 
   Widget _buildMapWithDynamicMarkers(AdminController controller) {
-    List<Polygon> polygons = [];
-    List<Marker> markers = [];
+    return Obx(() {
+      List<Polygon> polygons = [];
+      List<Marker> markers = [];
 
-    // Add sector boundaries
-    for (var sector in controller.sectors) {
-      final boundary = controller.getSectorBoundary(sector);
-      final color = controller.sectorColors[sector] ?? Colors.grey;
+      // Sector boundaries (only once)
+      for (var sector in controller.sectors) {
+        final boundary = controller.getSectorBoundary(sector);
+        final color = controller.sectorColors[sector] ?? Colors.grey;
 
-      if (boundary != null) {
-        polygons.add(
-          Polygon(
-            points: boundary,
-            color: color.withOpacity(0.1),
-            borderColor: color,
-            borderStrokeWidth: 5,
+        if (boundary != null) {
+          polygons.add(
+            Polygon(
+              points: boundary,
+              color: color.withOpacity(0.1),
+              borderColor: color,
+              borderStrokeWidth: 2,
+            ),
+          );
+        }
+      }
+
+      // Get marker size based on current zoom
+      final zoom = controller.currentZoom.value;
+      final markerSize = controller.getMarkerSize(zoom);
+
+      // House markers - NO AnimatedContainer to prevent color flicker
+      for (var house in controller.allHouses) {
+        markers.add(
+          Marker(
+            point: house.coordinates,
+            width: markerSize,
+            height: markerSize,
+            // Use alignment to keep markers centered
+            alignment: Alignment.center,
+            child: GestureDetector(
+              onTap: () => controller.showHouseDetails(house, Get.context!),
+              child: Container(
+                // Fixed size - no animation on zoom to prevent flicker
+                width: markerSize,
+                height: markerSize,
+                decoration: BoxDecoration(
+                  color: house.statusColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white,
+                    width: markerSize > 16 ? .5 : 5,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25),
+                      blurRadius: markerSize > 16 ? 4 : 2,
+                      offset: Offset(0, markerSize > 16 ? 2 : 1),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.location_on,
+                  size: markerSize * 0.6,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         );
       }
-    }
 
-    // Get marker size based on current zoom
-    final markerSize = controller.getMarkerSize(controller.currentZoom.value);
-    final fontSize = controller.getFontSize(markerSize);
-
-    // Add house markers with dynamic size
-    for (var house in controller.allHouses) {
-      markers.add(
-        Marker(
-          point: house.coordinates,
-          width: markerSize,
-          height: markerSize,
-          child: GestureDetector(
-            onTap: () {
-              controller.showHouseDetails(house, Get.context!);
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: markerSize,
-              height: markerSize,
-              decoration: BoxDecoration(
-                color: house.statusColor,
-                borderRadius: BorderRadius.circular(200.r),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: markerSize > 16 ? 4 : 2,
-                    offset: Offset(0, markerSize > 16 ? 2 : 1),
-                  ),
-                ],
-              ),
-              child: Icon(Icons.location_on,size: 10,color: Colors.white,)
+      return Container(
+        height: 350.h,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14.r),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14.r),
+          child: FlutterMap(
+            mapController: controller.mapController,
+            options: MapOptions(
+              initialCenter: const LatLng(33.7030, 73.0470),
+              initialZoom: 14.5,
+              // Add this to smooth out zoom
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+              ),
+              onPositionChanged: (position, hasGesture) {
+                if (hasGesture && position.zoom != null) {
+                  // Debounce zoom updates
+                  final newZoom = position.zoom!;
+                  if ((newZoom - controller.currentZoom.value).abs() > 0.3) {
+                    controller.updateZoom(newZoom);
+                  }
+                }
+              },
+            ),
+            children: [
+              TileLayer(
+                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                userAgentPackageName: 'com.example.polio_guard',
+              ),
+              PolygonLayer(polygons: polygons),
+              MarkerLayer(markers: markers),
+            ],
           ),
         ),
       );
-    }
-
-    return Container(
-      height: 350.h,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(14.r),
-        child: FlutterMap(
-          mapController: controller.mapController,
-          options: MapOptions(
-            initialCenter: const LatLng(33.7030, 73.0470),
-            initialZoom: 14.5,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all,
-            ),
-            // Use onPositionChanged to track zoom - FIXED null check
-            onPositionChanged: (position, hasGesture) {
-              if (hasGesture && position.zoom != null) {
-                controller.updateZoom(position.zoom!);
-              }
-            },
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.polio_guard',
-            ),
-            PolygonLayer(polygons: polygons),
-            MarkerLayer(markers: markers),
-          ],
-        ),
-      ),
-    );
+    });
   }
-
   Widget _buildLegend(AdminController controller) {
     return Container(
       padding: EdgeInsets.all(14.w),
@@ -317,26 +320,11 @@ class AdminDashboard extends StatelessWidget {
             spacing: 16.w,
             runSpacing: 8.h,
             children: [
-              _LegendItem(
-                color: const Color(0xFF1A73E8),
-                label: 'F-8 Markaz',
-              ),
-              _LegendItem(
-                color: const Color(0xFF34A853),
-                label: 'F-8/1',
-              ),
-              _LegendItem(
-                color: const Color(0xFFFBBC04),
-                label: 'F-8/2',
-              ),
-              _LegendItem(
-                color: const Color(0xFF9C27B0),
-                label: 'F-8/3',
-              ),
-              _LegendItem(
-                color: const Color(0xFFEA4335),
-                label: 'F-8/4',
-              ),
+              _LegendItem(color: const Color(0xFF1A73E8), label: 'F-8 Markaz'),
+              _LegendItem(color: const Color(0xFF34A853), label: 'F-8/1'),
+              _LegendItem(color: const Color(0xFFFBBC04), label: 'F-8/2'),
+              _LegendItem(color: const Color(0xFF9C27B0), label: 'F-8/3'),
+              _LegendItem(color: const Color(0xFFEA4335), label: 'F-8/4'),
             ],
           ),
           SizedBox(height: 8.h),
@@ -398,83 +386,12 @@ class AdminDashboard extends StatelessWidget {
   }
 }
 
-// ============ Helper Widgets ============
-
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(10.w),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10.r),
-            ),
-            child: Icon(icon, color: color, size: 22.sp),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1A1A1A),
-                  ),
-                ),
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 11.sp,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
+// Helper Widgets
 class _LegendItem extends StatelessWidget {
   final Color color;
   final String label;
 
-  const _LegendItem({
-    required this.color,
-    required this.label,
-  });
+  const _LegendItem({required this.color, required this.label});
 
   @override
   Widget build(BuildContext context) {
@@ -484,10 +401,7 @@ class _LegendItem extends StatelessWidget {
         Container(
           width: 12.w,
           height: 12.w,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         SizedBox(width: 6.w),
         Text(

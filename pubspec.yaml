@@ -18,13 +18,22 @@ dependencies:
   firebase_storage: ^13.4.6
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
-  geolocator: ^10.1.0
   permission_handler: ^11.0.1
   fl_chart: ^0.66.0
-
-    # Utilities
+  camera: ^0.10.6
+  path_provider: ^2.1.4
+  video_player: ^2.9.2   # to preview the recorded video before submit
+  http: ^1.2.2           # for Cloudinary upload
+  geolocator: ^12.0.0    # optional: stamp visit with current location
+  uuid: ^4.4.2
   connectivity_plus: ^7.3.1
   intl: ^0.20.3
+  share_plus: ^13.3.0
+  url_launcher: ^6.2.2
+  in_app_review: ^2.0.8
+  chewie: ^1.8.5
+  audioplayers: ^6.0.0
+
 
 dev_dependencies:
   flutter_test:
@@ -35,3 +44,4 @@ flutter:
   # Uncomment once you add a real logo image:
   assets:
     - assets/
+    - assets/audio/

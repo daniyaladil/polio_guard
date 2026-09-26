@@ -2,11 +2,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../core/services/houses_data.dart';
 import '../controller/admin_controller.dart';
 
 class AdminAnalysisScreen extends StatelessWidget {
@@ -50,31 +45,12 @@ class AdminAnalysisScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Summary Cards
               _buildSummaryCards(controller),
               SizedBox(height: 16.h),
-
-              // Pie Chart - Vaccination Status Distribution
               _buildPieChartSection(controller),
               SizedBox(height: 16.h),
-
-              // Bar Chart - Sector-wise Progress
-              _buildBarChartSection(controller),
-              SizedBox(height: 16.h),
-
-              // Heatmap
-              _buildColorMapSection(controller),
-              SizedBox(height: 16.h),
-
-              // Line Chart - Progress Over Time (Simulated)
-              _buildProgressLineChart(controller),
-              SizedBox(height: 16.h),
-
-              // Sector Details Table
               _buildSectorDetailsTable(controller),
               SizedBox(height: 16.h),
-
-              // Worker Performance
               _buildWorkerPerformance(controller),
               SizedBox(height: 24.h),
             ],
@@ -84,109 +60,15 @@ class AdminAnalysisScreen extends StatelessWidget {
     );
   }
 
-  // ============ SECTOR COLOR MAP ============
-  Widget _buildColorMapSection(AdminController controller) {
-    final sectors = controller.sectors;
-
-    // Build polygons + markers
-    List<Polygon> polygons = [];
-    List<Marker> markers = [];
-
-    for (var sector in sectors) {
-      final boundary = controller.getSectorBoundary(sector);
-      if (boundary == null || boundary.isEmpty) continue;
-
-      final stats = DummyHouseData.getSectorStats(sector);
-      final total = stats['total'] as int;
-      final vaccinated = stats['vaccinated'] as int;
-      final progress = total > 0 ? vaccinated / total : 0.0;
-
-      final color = _coverageColor(progress);
-
-      polygons.add(
-        Polygon(
-          points: boundary,
-          color: color.withOpacity(0.55),   // fill
-          borderColor: color,               // outline
-          borderStrokeWidth: 3,
-        ),
-      );
-    }
-
-    // Small house dots on top for detail
-    for (var house in controller.allHouses) {
-      markers.add(
-        Marker(
-          point: house.coordinates,
-          width: 8,
-          height: 8,
-          child: Container(
-            decoration: BoxDecoration(
-              color: house.statusColor,
-              shape: BoxShape.circle,
-              border: Border.all(color: Colors.white, width: 1),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return _ChartContainer(
-      title: 'Sector Coverage Color Map',
-      subtitle: 'Red = low vaccination, Green = high vaccination',
-      child: SizedBox(
-        height: 340.h,
-        child: Row(
-          children: [
-            // -------- MAP --------
-            Expanded(
-              flex: 5,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12.r),
-                child: FlutterMap(
-                  options: const MapOptions(
-                    initialCenter: LatLng(33.7030, 73.0470),
-                    initialZoom: 13.0,
-                    interactionOptions: InteractionOptions(
-                      flags: InteractiveFlag.all,
-                    ),
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate:
-                      'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.example.polio_guard',
-                    ),
-                    PolygonLayer(polygons: polygons),
-                    MarkerLayer(markers: markers),
-                  ],
-                ),
-              ),
-            ),
-
-            SizedBox(width: 12.w),
-
-            // -------- GRADIENT LEGEND (right side) --------
-            SizedBox(
-              width: 70.w,
-              child: _CoverageGradientLegend(sectors: sectors),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  // ============ SUMMARY CARDS ============
+  // ============ SUMMARY CARDS (LIVE DATA) ============
   Widget _buildSummaryCards(AdminController controller) {
-    final stats = DummyHouseData.getOverallStats();
-    final totalHouses = stats['total'] as int;
-    final vaccinated = stats['vaccinated'] as int;
-    final refused = stats['refused'] as int;
-    final absent = stats['absent'] as int;
-    final pending = stats['pending'] as int;
-    final progress = stats['progress'] as int;
+    final stats = controller.overallStats;
+    final totalHouses = stats['total']!;
+    final vaccinated = stats['vaccinated']!;
+    final refused = stats['refused']!;
+    final absent = stats['absent']!;
+    final pending = stats['pending']!;
+    final progress = stats['progress']!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,7 +114,9 @@ class AdminAnalysisScreen extends StatelessWidget {
                 value: vaccinated.toString(),
                 icon: Icons.check_circle,
                 color: const Color(0xFF34A853),
-                subtitle: '${((vaccinated / totalHouses) * 100).toStringAsFixed(1)}%',
+                subtitle: totalHouses > 0
+                    ? '${((vaccinated / totalHouses) * 100).toStringAsFixed(1)}%'
+                    : '0%',
               ),
             ),
             SizedBox(width: 12.w),
@@ -242,7 +126,9 @@ class AdminAnalysisScreen extends StatelessWidget {
                 value: pending.toString(),
                 icon: Icons.pending,
                 color: const Color(0xFFFBBC04),
-                subtitle: '${((pending / totalHouses) * 100).toStringAsFixed(1)}%',
+                subtitle: totalHouses > 0
+                    ? '${((pending / totalHouses) * 100).toStringAsFixed(1)}%'
+                    : '0%',
               ),
             ),
           ],
@@ -256,7 +142,9 @@ class AdminAnalysisScreen extends StatelessWidget {
                 value: refused.toString(),
                 icon: Icons.cancel,
                 color: const Color(0xFFEA4335),
-                subtitle: '${((refused / totalHouses) * 100).toStringAsFixed(1)}%',
+                subtitle: totalHouses > 0
+                    ? '${((refused / totalHouses) * 100).toStringAsFixed(1)}%'
+                    : '0%',
               ),
             ),
             SizedBox(width: 12.w),
@@ -266,7 +154,9 @@ class AdminAnalysisScreen extends StatelessWidget {
                 value: absent.toString(),
                 icon: Icons.person_off,
                 color: const Color(0xFF9C27B0),
-                subtitle: '${((absent / totalHouses) * 100).toStringAsFixed(1)}%',
+                subtitle: totalHouses > 0
+                    ? '${((absent / totalHouses) * 100).toStringAsFixed(1)}%'
+                    : '0%',
               ),
             ),
           ],
@@ -275,13 +165,30 @@ class AdminAnalysisScreen extends StatelessWidget {
     );
   }
 
-  // ============ PIE CHART ============
+  // ============ PIE CHART (LIVE DATA) ============
   Widget _buildPieChartSection(AdminController controller) {
-    final stats = DummyHouseData.getOverallStats();
-    final vaccinated = (stats['vaccinated'] as int).toDouble();
-    final refused = (stats['refused'] as int).toDouble();
-    final absent = (stats['absent'] as int).toDouble();
-    final pending = (stats['pending'] as int).toDouble();
+    final stats = controller.overallStats;
+    final total = stats['total']!;
+    final vaccinated = stats['vaccinated']!.toDouble();
+    final refused = stats['refused']!.toDouble();
+    final absent = stats['absent']!.toDouble();
+    final pending = stats['pending']!.toDouble();
+
+    if (total == 0) {
+      return _ChartContainer(
+        title: 'Vaccination Status Distribution',
+        subtitle: 'No data yet',
+        child: SizedBox(
+          height: 280.h,
+          child: Center(
+            child: Text(
+              'No houses loaded',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ),
+        ),
+      );
+    }
 
     return _ChartContainer(
       title: 'Vaccination Status Distribution',
@@ -301,50 +208,54 @@ class AdminAnalysisScreen extends StatelessWidget {
                   sectionsSpace: 2,
                   centerSpaceRadius: 50,
                   sections: [
-                    PieChartSectionData(
-                      value: vaccinated,
-                      color: const Color(0xFF34A853),
-                      radius: 60,
-                      title: '${vaccinated.toInt()}',
-                      titleStyle: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    if (vaccinated > 0)
+                      PieChartSectionData(
+                        value: vaccinated,
+                        color: const Color(0xFF34A853),
+                        radius: 60,
+                        title: '${vaccinated.toInt()}',
+                        titleStyle: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    PieChartSectionData(
-                      value: refused,
-                      color: const Color(0xFFEA4335),
-                      radius: 60,
-                      title: '${refused.toInt()}',
-                      titleStyle: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    if (refused > 0)
+                      PieChartSectionData(
+                        value: refused,
+                        color: const Color(0xFFEA4335),
+                        radius: 60,
+                        title: '${refused.toInt()}',
+                        titleStyle: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    PieChartSectionData(
-                      value: absent,
-                      color: const Color(0xFF9C27B0),
-                      radius: 60,
-                      title: '${absent.toInt()}',
-                      titleStyle: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    if (absent > 0)
+                      PieChartSectionData(
+                        value: absent,
+                        color: const Color(0xFF9C27B0),
+                        radius: 60,
+                        title: '${absent.toInt()}',
+                        titleStyle: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    PieChartSectionData(
-                      value: pending,
-                      color: const Color(0xFFFBBC04),
-                      radius: 60,
-                      title: '${pending.toInt()}',
-                      titleStyle: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    if (pending > 0)
+                      PieChartSectionData(
+                        value: pending,
+                        color: const Color(0xFFFBBC04),
+                        radius: 60,
+                        title: '${pending.toInt()}',
+                        titleStyle: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -359,28 +270,28 @@ class AdminAnalysisScreen extends StatelessWidget {
                     color: const Color(0xFF34A853),
                     label: 'Vaccinated',
                     value: vaccinated.toInt(),
-                    total: stats['total'] as int,
+                    total: total,
                   ),
                   SizedBox(height: 8.h),
                   _PieLegendItem(
                     color: const Color(0xFFEA4335),
                     label: 'Refused',
                     value: refused.toInt(),
-                    total: stats['total'] as int,
+                    total: total,
                   ),
                   SizedBox(height: 8.h),
                   _PieLegendItem(
                     color: const Color(0xFF9C27B0),
                     label: 'Absent',
                     value: absent.toInt(),
-                    total: stats['total'] as int,
+                    total: total,
                   ),
                   SizedBox(height: 8.h),
                   _PieLegendItem(
                     color: const Color(0xFFFBBC04),
                     label: 'Pending',
                     value: pending.toInt(),
-                    total: stats['total'] as int,
+                    total: total,
                   ),
                 ],
               ),
@@ -391,233 +302,7 @@ class AdminAnalysisScreen extends StatelessWidget {
     );
   }
 
-  // ============ BAR CHART ============
-  Widget _buildBarChartSection(AdminController controller) {
-    final sectors = controller.sectors;
-    final sectorStats = sectors.map((s) => DummyHouseData.getSectorStats(s)).toList();
-
-    return _ChartContainer(
-      title: 'Sector-wise Vaccination Progress',
-      subtitle: 'Comparison across all sectors',
-      child: SizedBox(
-        height: 250.h,
-        child: BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            maxY: 100,
-            barTouchData: BarTouchData(
-              enabled: true,
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  return BarTooltipItem(
-                    '${rod.toY.toInt()}%',
-                    TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12.sp,
-                    ),
-                  );
-                },
-              ),
-            ),
-            titlesData: FlTitlesData(
-              show: true,
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, meta) {
-                    final sectorName = sectors[value.toInt()]
-                        .replaceAll('F-8_', '')
-                        .replaceAll('_', '/');
-                    return Padding(
-                      padding: EdgeInsets.only(top: 8.h),
-                      child: Text(
-                        sectorName,
-                        style: TextStyle(
-                          fontSize: 9.sp,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF3A3A3A),
-                        ),
-                      ),
-                    );
-                  },
-                  reservedSize: 30,
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 35,
-                  interval: 25,
-                  getTitlesWidget: (value, meta) {
-                    return Text(
-                      '${value.toInt()}%',
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.grey.shade600,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-            ),
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: 25,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: Colors.grey.shade200,
-                  strokeWidth: 1,
-                );
-              },
-            ),
-            borderData: FlBorderData(show: false),
-            barGroups: List.generate(sectors.length, (index) {
-              final stats = sectorStats[index];
-              final progress = (stats['progress'] as int).toDouble();
-              return BarChartGroupData(
-                x: index,
-                barRods: [
-                  BarChartRodData(
-                    toY: progress,
-                    color: _getSectorColor(sectors[index]),
-                    width: 20.w,
-                    borderRadius: BorderRadius.circular(4.r),
-                    backDrawRodData: BackgroundBarChartRodData(
-                      show: true,
-                      toY: 100,
-                      color: Colors.grey.shade100,
-                    ),
-                  ),
-                ],
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============ PROGRESS LINE CHART ============
-  Widget _buildProgressLineChart(AdminController controller) {
-    // Simulated progress data over time (you can replace with actual data)
-    final progressData = [
-      FlSpot(0, 10),
-      FlSpot(1, 25),
-      FlSpot(2, 40),
-      FlSpot(3, 55),
-      FlSpot(4, 70),
-      FlSpot(5, 85),
-      FlSpot(6, 92),
-    ];
-
-    return _ChartContainer(
-      title: 'Vaccination Progress Trend',
-      subtitle: 'Simulated progress over campaign duration',
-      child: SizedBox(
-        height: 200.h,
-        child: LineChart(
-          LineChartData(
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: 20,
-              getDrawingHorizontalLine: (value) {
-                return FlLine(
-                  color: Colors.grey.shade200,
-                  strokeWidth: 1,
-                );
-              },
-            ),
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  interval: 1,
-                  getTitlesWidget: (value, meta) {
-                    const days = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7'];
-                    if (value.toInt() < days.length) {
-                      return Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: Text(
-                          days[value.toInt()],
-                          style: TextStyle(
-                            fontSize: 10.sp,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      );
-                    }
-                    return const SizedBox();
-                  },
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 35,
-                  interval: 20,
-                  getTitlesWidget: (value, meta) {
-                    return Text(
-                      '${value.toInt()}%',
-                      style: TextStyle(
-                        fontSize: 10.sp,
-                        color: Colors.grey.shade600,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            minX: 0,
-            maxX: 6,
-            minY: 0,
-            maxY: 100,
-            lineBarsData: [
-              LineChartBarData(
-                spots: progressData,
-                isCurved: true,
-                color: const Color(0xFF1A5276),
-                barWidth: 3,
-                isStrokeCapRound: true,
-                dotData: FlDotData(
-                  show: true,
-                  getDotPainter: (spot, percent, barData, index) {
-                    return FlDotCirclePainter(
-                      radius: 4,
-                      color: Colors.white,
-                      strokeWidth: 2,
-                      strokeColor: const Color(0xFF1A5276),
-                    );
-                  },
-                ),
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: const Color(0xFF1A5276).withOpacity(0.1),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ============ SECTOR DETAILS TABLE ============
+  // ============ SECTOR DETAILS TABLE (LIVE DATA) ============
   Widget _buildSectorDetailsTable(AdminController controller) {
     final sectors = controller.sectors;
 
@@ -693,8 +378,8 @@ class AdminAnalysisScreen extends StatelessWidget {
             ),
           ],
           rows: sectors.map((sector) {
-            final stats = DummyHouseData.getSectorStats(sector);
-            final progress = stats['progress'] as int;
+            final stats = controller.sectorStats(sector);
+            final progress = stats['progress']!;
             return DataRow(
               cells: [
                 DataCell(
@@ -783,23 +468,19 @@ class AdminAnalysisScreen extends StatelessWidget {
     );
   }
 
-  // ============ WORKER PERFORMANCE ============
+  // ============ WORKER PERFORMANCE (SECTOR-BASED) ============
   Widget _buildWorkerPerformance(AdminController controller) {
-    // Simulated worker data
-    final workers = [
-      {'name': 'Worker 1', 'houses': 150, 'vaccinated': 120, 'sector': 'F-8/1'},
-      {'name': 'Worker 2', 'houses': 200, 'vaccinated': 180, 'sector': 'F-8/2'},
-      {'name': 'Worker 3', 'houses': 100, 'vaccinated': 85, 'sector': 'F-8/4'},
-    ];
+    final sectors = controller.sectors;
 
     return _ChartContainer(
-      title: 'Worker Performance',
-      subtitle: 'Individual worker vaccination rates',
+      title: 'Sector Progress Performance',
+      subtitle: 'Vaccination rate per sector',
       child: Column(
-        children: workers.map((worker) {
-          final houses = worker['houses'] as int;
-          final vaccinated = worker['vaccinated'] as int;
-          final percentage = (vaccinated / houses * 100).round();
+        children: sectors.map((sector) {
+          final stats = controller.sectorStats(sector);
+          final total = stats['total']!;
+          final vaccinated = stats['vaccinated']!;
+          final percentage = stats['progress']!;
 
           return Padding(
             padding: EdgeInsets.only(bottom: 12.h),
@@ -809,16 +490,16 @@ class AdminAnalysisScreen extends StatelessWidget {
                   width: 40.w,
                   height: 40.w,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A5276).withOpacity(0.1),
+                    color: _getSectorColor(sector).withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
                     child: Text(
-                      worker['name'].toString().split(' ').last,
+                      sector.replaceAll('F-8_', '').replaceAll('Markaz', 'M'),
                       style: TextStyle(
-                        fontSize: 14.sp,
+                        fontSize: 12.sp,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1A5276),
+                        color: _getSectorColor(sector),
                       ),
                     ),
                   ),
@@ -832,7 +513,7 @@ class AdminAnalysisScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            worker['name'].toString(),
+                            sector.replaceAll('F-8_', 'F-8/').replaceAll('_', ''),
                             style: TextStyle(
                               fontSize: 13.sp,
                               fontWeight: FontWeight.w600,
@@ -850,7 +531,7 @@ class AdminAnalysisScreen extends StatelessWidget {
                       ),
                       SizedBox(height: 4.h),
                       Text(
-                        '${worker['sector']} • $vaccinated/$houses houses',
+                        '$vaccinated/$total houses vaccinated',
                         style: TextStyle(
                           fontSize: 11.sp,
                           color: Colors.grey.shade600,
@@ -860,7 +541,7 @@ class AdminAnalysisScreen extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4.r),
                         child: LinearProgressIndicator(
-                          value: vaccinated / houses,
+                          value: total > 0 ? vaccinated / total : 0,
                           backgroundColor: Colors.grey.shade200,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             _getProgressColor(percentage),
@@ -1050,7 +731,8 @@ class _PieLegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percentage = total > 0 ? (value / total * 100).toStringAsFixed(1) : '0';
+    final percentage =
+    total > 0 ? (value / total * 100).toStringAsFixed(1) : '0';
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -1089,108 +771,4 @@ class _PieLegendItem extends StatelessWidget {
       ],
     );
   }
-}
-// ============ GRADIENT LEGEND (right side of color map) ============
-class _CoverageGradientLegend extends StatelessWidget {
-  final List<String> sectors;
-  const _CoverageGradientLegend({required this.sectors});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // 100% label at top
-        Text(
-          '100%',
-          style: TextStyle(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF34A853),
-          ),
-        ),
-
-        SizedBox(height: 4.h),
-
-        // The gradient bar: green (top) -> yellow -> red (bottom)
-        Expanded(
-          child: Container(
-            width: 22.w,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(6.r),
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFF1B8A3A), // deep green (100%)
-                  Color(0xFF34A853), // green
-                  Color(0xFFA5D66A), // yellow-green
-                  Color(0xFFFBBC04), // yellow
-                  Color(0xFFF57C00), // orange
-                  Color(0xFFEA4335), // red
-                  Color(0xFF8B0000), // dark red (0%)
-                ],
-                stops: [0.0, 0.15, 0.35, 0.5, 0.7, 0.85, 1.0],
-              ),
-              border: Border.all(color: Colors.grey.shade300, width: 1),
-            ),
-          ),
-        ),
-
-        SizedBox(height: 4.h),
-
-        // 0% label at bottom
-        Text(
-          '0%',
-          style: TextStyle(
-            fontSize: 10.sp,
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFFEA4335),
-          ),
-        ),
-
-        SizedBox(height: 8.h),
-
-        Text(
-          'Coverage',
-          style: TextStyle(
-            fontSize: 9.sp,
-            color: Colors.grey.shade600,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-}
-
-// ============ COVERAGE COLOR SCALE ============
-/// Maps 0.0 (0%) -> dark red, 0.5 (50%) -> yellow, 1.0 (100%) -> deep green
-Color _coverageColor(double coverage) {
-  // Clamp
-  coverage = coverage.clamp(0.0, 1.0);
-
-  // Define stops (position, color)
-  const stops = <double>[
-    0.0,   // dark red
-    0.25,  // red
-    0.5,   // yellow
-    0.75,  // yellow-green
-    1.0,   // deep green
-  ];
-  const colors = <Color>[
-    Color(0xFF8B0000),
-    Color(0xFFEA4335),
-    Color(0xFFFBBC04),
-    Color(0xFFA5D66A),
-    Color(0xFF1B8A3A),
-  ];
-
-  for (int i = 0; i < stops.length - 1; i++) {
-    if (coverage >= stops[i] && coverage <= stops[i + 1]) {
-      final t = (coverage - stops[i]) / (stops[i + 1] - stops[i]);
-      return Color.lerp(colors[i], colors[i + 1], t)!;
-    }
-  }
-  return colors.last;
 }

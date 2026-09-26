@@ -35,89 +35,93 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: ListView(
-        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
-        children: [
-          Obx(() => ProfileHeader(
-            name: controller.userName.value,
-            role: controller.userRole.value,
-            onTap: controller.goToProfile,
-          )),
-          SizedBox(height: 20.h),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          _SectionLabel('General'),
-          _SectionCard(
-            children: [
-              SettingsTile(
-                icon: Icons.share_outlined,
-                label: 'Share App',
-                onTap: controller.shareApp,
-              ),
-              const _TileDivider(),
-              SettingsTile(
-                icon: Icons.feedback_outlined,
-                label: 'Send Feedback',
-                onTap: controller.sendFeedback,
-              ),
-              const _TileDivider(),
-              SettingsTile(
-                icon: Icons.star_outline,
-                label: 'Rate Us',
-                onTap: controller.rateUs,
-              ),
-            ],
-          ),
-          SizedBox(height: 20.h),
+        return ListView(
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+          children: [
+            // Profile Header with actual data
+            ProfileHeader(
+              name: controller.userName.value,
+              role: controller.userRole.value,
+              onTap: controller.goToProfile,
+            ),
+            SizedBox(height: 20.h),
 
-          _SectionLabel('Legal'),
-          _SectionCard(
-            children: [
-              SettingsTile(
-                icon: Icons.description_outlined,
-                label: 'Terms & Conditions',
-                onTap: controller.openTerms,
-              ),
-              const _TileDivider(),
-              SettingsTile(
-                icon: Icons.privacy_tip_outlined,
-                label: 'Privacy Policy',
-                onTap: controller.openPrivacyPolicy,
-              ),
-            ],
-          ),
-          SizedBox(height: 20.h),
+            _SectionLabel('General'),
+            _SectionCard(
+              children: [
+                SettingsTile(
+                  icon: Icons.share_outlined,
+                  label: 'Share App',
+                  subtitle: 'Invite others to use PolioGuard',
+                  onTap: controller.shareApp,
+                ),
+                const _TileDivider(),
+                SettingsTile(
+                  icon: Icons.star_outline,
+                  label: 'Rate Us',
+                  subtitle: 'Your feedback helps us improve',
+                  onTap: controller.rateUs,
+                ),
+              ],
+            ),
+            SizedBox(height: 20.h),
 
-          _SectionLabel('About'),
-          _SectionCard(
-            children: [
-              Obx(() => SettingsTile(
-                icon: Icons.info_outline,
-                label: 'App Version',
-                trailing: Text(
-                  'v${controller.appVersion.value} (${controller.buildNumber.value})',
-                  style: AppTextStyles.medium.copyWith(
-                    fontSize: 12.5.sp,
-                    color: Colors.grey.shade500,
+            _SectionLabel('Legal'),
+            _SectionCard(
+              children: [
+                SettingsTile(
+                  icon: Icons.description_outlined,
+                  label: 'Terms & Conditions',
+                  onTap: controller.openTerms,
+                ),
+                const _TileDivider(),
+                SettingsTile(
+                  icon: Icons.privacy_tip_outlined,
+                  label: 'Privacy Policy',
+                  onTap: controller.openPrivacyPolicy,
+                ),
+              ],
+            ),
+            SizedBox(height: 20.h),
+
+            _SectionLabel('About'),
+            _SectionCard(
+              children: [
+                SettingsTile(
+                  icon: Icons.info_outline,
+                  label: 'App Version',
+                  trailing: Text(
+                    'v${controller.appVersion.value} (${controller.buildNumber.value})',
+                    style: AppTextStyles.medium.copyWith(
+                      fontSize: 12.5.sp,
+                      color: Colors.grey.shade500,
+                    ),
                   ),
                 ),
-              )),
-            ],
-          ),
-          SizedBox(height: 28.h),
+              ],
+            ),
+            SizedBox(height: 28.h),
 
-          _SectionCard(
-            children: [
-              SettingsTile(
-                icon: Icons.logout,
-                label: 'Log Out',
-                iconColor: Colors.redAccent,
-                labelColor: Colors.redAccent,
-                onTap: controller.confirmLogout,
-              ),
-            ],
-          ),
-        ],
-      ),
+            _SectionCard(
+              children: [
+                SettingsTile(
+                  icon: Icons.logout,
+                  label: 'Log Out',
+                  subtitle: 'Sign out of your account',
+                  iconColor: Colors.redAccent,
+                  labelColor: Colors.redAccent,
+                  onTap: controller.confirmLogout,
+                ),
+              ],
+            ),
+          ],
+        );
+      }),
     );
   }
 }
@@ -170,6 +174,11 @@ class _TileDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(height: 1, indent: 60.w, endIndent: 14.w, color: Colors.grey.shade200);
+    return Divider(
+      height: 1,
+      indent: 60.w,
+      endIndent: 14.w,
+      color: Colors.grey.shade200,
+    );
   }
 }

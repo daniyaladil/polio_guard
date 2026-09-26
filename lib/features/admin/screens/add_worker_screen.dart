@@ -41,127 +41,139 @@ class _AddWorkerScreenState extends State<AddWorkerScreen> {
         backgroundColor: Colors.blue.shade900,
         foregroundColor: Colors.white,
       ),
-      body: Obx(() => Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildTextField(
-                controller: _nameController,
-                label: 'Full Name',
-                hint: 'Enter worker name',
-                icon: Icons.person,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Name is required';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16.h),
-
-              _buildTextField(
-                controller: _emailController,
-                label: 'Email Address',
-                hint: 'worker@example.com',
-                icon: Icons.email,
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Email is required';
-                  }
-                  final emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$');
-                  if (!emailRegex.hasMatch(value.trim())) {
-                    return 'Enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16.h),
-
-              // Sector dropdown
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(
-                  labelText: 'Assign Sector',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                  prefixIcon: const Icon(Icons.location_on),
+      // ✅ ADD resizeToAvoidBottomInset (default is true, but explicit here)
+      resizeToAvoidBottomInset: true,
+      body: SafeArea(
+        // ✅ Wrap in SingleChildScrollView to prevent overflow
+        child: SingleChildScrollView(
+          // ✅ Add padding that accounts for keyboard
+          padding: EdgeInsets.only(
+            left: 16.w,
+            right: 16.w,
+            top: 16.h,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24.h,
+          ),
+          child: Obx(() => Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildTextField(
+                  controller: _nameController,
+                  label: 'Full Name',
+                  hint: 'Enter worker name',
+                  icon: Icons.person,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Name is required';
+                    }
+                    return null;
+                  },
                 ),
-                value: _selectedSector,
-                items: _availableSectors.map((sector) {
-                  return DropdownMenuItem(
-                    value: sector,
-                    child: Text(sector),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSector = value;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Please select a sector';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16.h),
+                SizedBox(height: 16.h),
 
-              Container(
-                padding: EdgeInsets.all(12.w),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(8.r),
-                  border: Border.all(color: Colors.blue.shade200),
+                _buildTextField(
+                  controller: _emailController,
+                  label: 'Email Address',
+                  hint: 'worker@example.com',
+                  icon: Icons.email,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Email is required';
+                    }
+                    final emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,4}$');
+                    if (!emailRegex.hasMatch(value.trim())) {
+                      return 'Enter a valid email';
+                    }
+                    return null;
+                  },
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info, color: Colors.blue.shade700),
-                    SizedBox(width: 8.w),
-                    Expanded(
-                      child: Text(
-                        'Default password for all workers: $commonPassword',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.blue.shade700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 24.h),
+                SizedBox(height: 16.h),
 
-              _isLoading.value
-                  ? const CircularProgressIndicator()
-                  : SizedBox(
-                width: double.infinity,
-                height: 50.h,
-                child: ElevatedButton(
-                  onPressed: _createWorker,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade900,
-                    shape: RoundedRectangleBorder(
+                // Sector dropdown
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    labelText: 'Assign Sector',
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8.r),
                     ),
+                    prefixIcon: const Icon(Icons.location_on),
                   ),
-                  child: const Text(
-                    'Create Worker Account',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  value: _selectedSector,
+                  items: _availableSectors.map((sector) {
+                    return DropdownMenuItem(
+                      value: sector,
+                      child: Text(sector),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedSector = value;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Please select a sector';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16.h),
+
+                Container(
+                  padding: EdgeInsets.all(12.w),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8.r),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.blue.shade700),
+                      SizedBox(width: 8.w),
+                      Expanded(
+                        child: Text(
+                          'Default password for all workers: $commonPassword',
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 24.h),
+
+                _isLoading.value
+                    ? const Center(child: CircularProgressIndicator())
+                    : SizedBox(
+                  width: double.infinity,
+                  height: 50.h,
+                  child: ElevatedButton(
+                    onPressed: _createWorker,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade900,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                    ),
+                    child: const Text(
+                      'Create Worker Account',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          )),
         ),
-      )),
+      ),
     );
   }
 
@@ -176,6 +188,7 @@ class _AddWorkerScreenState extends State<AddWorkerScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      textInputAction: TextInputAction.next, // ✅ Better UX with next button
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

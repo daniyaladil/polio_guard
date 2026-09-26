@@ -10,6 +10,7 @@ import 'core/services/firebase_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await Get.putAsync(() => FirebaseService().init());
   runApp(const PolioGuardApp());
 }
 

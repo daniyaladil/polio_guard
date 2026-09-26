@@ -85,7 +85,7 @@ class AuthController extends GetxController {
 
       // Navigate to worker dashboard
       // Get.offAllNamed('/worker-dashboard');
-      Get.to(MainScreen());
+      Get.offAll(() => MainScreen());
 
     } catch (e) {
       errorMessage.value = 'Login failed: ${e.toString()}';

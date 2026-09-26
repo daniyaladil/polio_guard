@@ -18,10 +18,5 @@ class AppRoutes {
       page: () => const AdminDashboard(),
       transition: Transition.fadeIn,
     ),
-    GetPage(
-      name: workerDashboard,
-      page: () => const WorkerDashboard(),
-      transition: Transition.fadeIn,
-    ),
   ];
 }

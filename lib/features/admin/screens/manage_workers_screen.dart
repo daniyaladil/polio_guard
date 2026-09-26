@@ -62,8 +62,8 @@ class ManageWorkersScreen extends StatelessWidget {
                   SizedBox(height: 16.h),
                   ElevatedButton.icon(
                     onPressed: () => Get.to(() => const AddWorkerScreen()),
-                    icon: const Icon(Icons.person_add),
-                    label: const Text('Add First Worker'),
+                    icon: const Icon(Icons.person_add,color: Colors.white,),
+                    label: const Text('Add First Worker',style: TextStyle(color: Colors.white),),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1A5276),
                     ),

@@ -19,7 +19,6 @@ class MainScreen extends StatelessWidget {
           Obx(() => IndexedStack(
             index: controller.currentIndex.value,
             children: const [
-              WorkerDashboard(),
               HomeScreen(),
               SettingsScreen(),
             ],

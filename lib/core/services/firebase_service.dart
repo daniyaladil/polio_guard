@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_disposable.dart';
-
+import 'package:polio_guard/core/services/visits_service.dart';
 class FirebaseService extends GetxService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -12,9 +12,17 @@ class FirebaseService extends GetxService {
   static const String adminPassword = 'Admin@123';
 
   Future<FirebaseService> init() async {
-    // Create admin account if doesn't exist
     await _ensureAdminExists();
+    await _seedHousesOnce();
     return this;
+  }
+
+  Future<void> _seedHousesOnce() async {
+    try {
+      await VisitsService.seedHousesFromDummy();
+    } catch (e) {
+      print('❌ seed houses failed: $e');
+    }
   }
 
   // Ensure admin exists in Firestore
